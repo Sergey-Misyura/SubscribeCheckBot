@@ -1,4 +1,5 @@
 from aiogram import types
+from aiogram.types import ContentType
 from dispatcher import dp
 import config
 
@@ -26,7 +27,9 @@ async def getlink_command(message: types.Message):
 
     await message.answer("Текущая ссылка: {}".format(content[0].strip()))
 
-@dp.message_handler(is_owner=True)
+
+
+@dp.message_handler(is_owner=True, content_types=ContentType.ANY)
 async def messages_handler(message: types.Message):
     if config.IS_POSTING_REQUESTED:
         config.IS_POSTING_REQUESTED = False
@@ -34,9 +37,18 @@ async def messages_handler(message: types.Message):
         inline_btn = InlineKeyboardButton("Получить ссылку!", callback_data="get_link_button")
         inline_kb = InlineKeyboardMarkup().add(inline_btn)
 
-        await message.bot.send_message(config.CHANNEL_ID, message.text, reply_markup=inline_kb)
+        if message.content_type == 'text':
+            await message.bot.send_message(config.CHANNEL_ID, message.text, reply_markup=inline_kb)
+            await message.answer("Пост опубликован!")
+        elif message.content_type == 'photo':
+            await message.bot.send_photo(config.CHANNEL_ID, message.photo[-1].file_id, message.caption, reply_markup=inline_kb)
+            await message.answer("Пост опубликован!")
+        else:
+            await message.answer('Такое сообщение не поддерживается')
 
-        await message.answer("Пост опубликован!")
+
+
+
 
 
 
